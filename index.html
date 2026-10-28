@@ -1,0 +1,1310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Interactive Botanical Plant Widget</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: radial-gradient(circle at 50% 20%, #ecfdf5 0%, #d1fae5 45%, #a7f3d0 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .display-font {
+            font-family: 'Fredoka', sans-serif;
+        }
+
+        /* Tactile 3D Card Container */
+        .botanical-card {
+            box-shadow: 
+                0 25px 50px -12px rgba(6, 78, 59, 0.25),
+                0 0 0 1px rgba(15, 23, 42, 0.08),
+                inset 0 1px 0 0 rgba(255, 255, 255, 0.6);
+        }
+
+        /* Custom 3D Tactile Range Slider */
+        .vitality-slider {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 20px;
+            border-radius: 999px;
+            background: linear-gradient(90deg, 
+                #78350f 0%, 
+                #b45309 20%, 
+                #eab308 42%, 
+                #84cc16 68%, 
+                #10b981 88%, 
+                #059669 100%
+            );
+            box-shadow: 
+                inset 0 3px 6px rgba(0, 0, 0, 0.35),
+                0 2px 0 rgba(255, 255, 255, 0.8);
+            outline: none;
+            cursor: pointer;
+        }
+
+        .vitality-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 35% 30%, #ffffff 0%, #f1f5f9 60%, #cbd5e1 100%);
+            border: 3px solid #0f172a;
+            box-shadow: 
+                0 6px 12px rgba(15, 23, 42, 0.3),
+                inset 0 2px 3px rgba(255, 255, 255, 0.9);
+            cursor: grab;
+            transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.15s ease;
+        }
+
+        .vitality-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.14);
+            box-shadow: 0 8px 16px rgba(16, 185, 129, 0.45);
+        }
+
+        .vitality-slider::-webkit-slider-thumb:active {
+            cursor: grabbing;
+            transform: scale(0.95);
+        }
+
+        .vitality-slider::-moz-range-thumb {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 35% 30%, #ffffff 0%, #f1f5f9 60%, #cbd5e1 100%);
+            border: 3px solid #0f172a;
+            box-shadow: 0 6px 12px rgba(15, 23, 42, 0.3);
+            cursor: grab;
+            transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        /* 3D Action Buttons */
+        .tactile-btn {
+            transition: all 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 4px 0 rgba(15, 23, 42, 0.18), inset 0 1px 0 rgba(255,255,255,0.6);
+        }
+        .tactile-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 0 rgba(15, 23, 42, 0.22), inset 0 1px 0 rgba(255,255,255,0.8);
+        }
+        .tactile-btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 1px 0 rgba(15, 23, 42, 0.2);
+        }
+
+        /* Sun God-Rays Rotation */
+        @keyframes slowSunSpin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .god-rays {
+            transform-origin: 360px 40px;
+            animation: slowSunSpin 38s linear infinite;
+        }
+    </style>
+</head>
+<body class="p-3 sm:p-6 flex flex-col items-center justify-center select-none">
+
+    <!-- Top Bar: Title & Embed Copy Button -->
+    <div class="max-w-lg w-full mb-3 flex items-center justify-between px-1">
+        <div>
+            <div class="flex items-center gap-2">
+                <span class="text-2xl">🪴</span>
+                <h1 class="display-font text-xl sm:text-2xl font-bold text-slate-800 tracking-tight">Flora3D Interactive</h1>
+                <span class="text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300">60FPS Physics</span>
+            </div>
+            <p class="text-xs text-slate-600 mt-0.5">Click plant to splash water, move cursor to interact, or drag slider!</p>
+        </div>
+
+        <button id="copyEmbedBtn" class="tactile-btn bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold px-3.5 py-2.5 rounded-xl flex items-center gap-1.5 border border-slate-700">
+            <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+            </svg>
+            <span id="copyBtnLabel">Copy Widget Code</span>
+        </button>
+    </div>
+
+    <!-- MAIN EMBEDDABLE WIDGET CARD -->
+    <div id="flora-widget-card" class="botanical-card bg-white rounded-[2rem] max-w-lg w-full overflow-hidden border border-slate-200/80 relative">
+        
+        <!-- Interactive Stage Viewport -->
+        <div id="stageContainer" class="relative w-full h-[430px] sm:h-[460px] overflow-hidden cursor-pointer transition-colors duration-700"
+             style="background: linear-gradient(180deg, #dbeafe 0%, #ecfccb 65%, #fef3c7 100%);">
+            
+            <!-- Top Floating Status Pill & Vitality Meter -->
+            <div class="absolute top-4 left-4 right-4 flex items-center justify-between z-20 pointer-events-none">
+                <div class="backdrop-blur-md bg-white/80 border border-white/60 shadow-sm px-3.5 py-1.5 rounded-2xl flex items-center gap-2">
+                    <span id="statusEmoji" class="text-xl">🌿</span>
+                    <div>
+                        <div id="statusTitle" class="display-font text-sm font-bold text-slate-800 leading-tight">Lush & Thriving</div>
+                        <div id="statusSub" class="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Soil Moisture: Optimal</div>
+                    </div>
+                </div>
+
+                <div class="backdrop-blur-md bg-slate-900/85 text-white px-3.5 py-1.5 rounded-2xl shadow-md border border-slate-700 flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" id="vitalityDot"></span>
+                    <span id="vitalityPercent" class="display-font text-base font-bold">65</span>
+                    <span class="text-xs text-slate-300 font-semibold">%</span>
+                </div>
+            </div>
+
+            <!-- Interactive HTML5 Particle Overlay Canvas (Rain, Dew, Pollen, Water Splash) -->
+            <canvas id="fxCanvas" class="absolute inset-0 w-full h-full pointer-events-none z-10"></canvas>
+
+            <!-- MAIN 3D-ILLUSTRATED BOTANICAL SVG -->
+            <svg id="botanicalSvg" viewBox="0 0 460 450" class="w-full h-full relative z-0 overflow-visible">
+                <defs>
+                    <!-- Soft Drop Shadow for 3D Depth -->
+                    <filter id="dropShadow3D" x="-20%" y="-20%" width="140%" height="140%">
+                        <feDropShadow dx="0" dy="6" stdDeviation="5" flood-color="#0f172a" flood-opacity="0.22" />
+                    </filter>
+
+                    <filter id="softGlow" x="-30%" y="-30%" width="160%" height="160%">
+                        <feGaussianBlur stdDeviation="6" result="blur" />
+                        <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                    </filter>
+
+                    <!-- Terracotta 3D Pot Body Gradient -->
+                    <linearGradient id="terracottaBody" x1="0%" y1="15%" x2="100%" y2="25%">
+                        <stop offset="0%" stop-color="#f97316" />
+                        <stop offset="18%" stop-color="#ea580c" />
+                        <stop offset="58%" stop-color="#c2410c" />
+                        <stop offset="88%" stop-color="#9a3412" />
+                        <stop offset="100%" stop-color="#7c2d12" />
+                    </linearGradient>
+
+                    <!-- Terracotta 3D Rim Gradient -->
+                    <linearGradient id="terracottaRim" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stop-color="#fdba74" />
+                        <stop offset="14%" stop-color="#fb923c" />
+                        <stop offset="52%" stop-color="#ea580c" />
+                        <stop offset="85%" stop-color="#9a3412" />
+                        <stop offset="100%" stop-color="#6c200b" />
+                    </linearGradient>
+
+                    <!-- Pot Inner Shadow Gradient -->
+                    <linearGradient id="potInnerDark" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stop-color="#271206" />
+                        <stop offset="100%" stop-color="#5c2d16" />
+                    </linearGradient>
+
+                    <!-- Dynamic Stem 3D Cylindrical Gradient (Explicit userSpaceOnUse prevents 0-width bounding box vertical line glitch) -->
+                    <linearGradient id="stem3DGrad" gradientUnits="userSpaceOnUse" x1="210" y1="312" x2="255" y2="120">
+                        <stop id="stemStop1" offset="0%" stop-color="#86efac" />
+                        <stop id="stemStop2" offset="45%" stop-color="#22c55e" />
+                        <stop id="stemStop3" offset="100%" stop-color="#14532d" />
+                    </linearGradient>
+
+                    <!-- Dynamic Front Leaf 3D Gradient -->
+                    <linearGradient id="leafFrontGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop id="leafFStop1" offset="0%" stop-color="#bef264" />
+                        <stop id="leafFStop2" offset="50%" stop-color="#22c55e" />
+                        <stop id="leafFStop3" offset="100%" stop-color="#15803d" />
+                    </linearGradient>
+
+                    <!-- Dynamic Back Leaf 3D Darker Gradient (for Parallax Depth) -->
+                    <linearGradient id="leafBackGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop id="leafBStop1" offset="0%" stop-color="#4ade80" />
+                        <stop id="leafBStop2" offset="60%" stop-color="#15803d" />
+                        <stop id="leafBStop3" offset="100%" stop-color="#064e3b" />
+                    </linearGradient>
+
+                    <!-- Crispy Dry Leaf Tip Gradient (Visible when wilted) -->
+                    <linearGradient id="dryLeafTipGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#a16207" />
+                        <stop offset="60%" stop-color="#78350f" />
+                        <stop offset="100%" stop-color="#451a03" />
+                    </linearGradient>
+
+                    <!-- Realistic Petal 3D Gradient (Outer Ring) -->
+                    <linearGradient id="petalOuterGrad" x1="50%" y1="0%" x2="50%" y2="100%">
+                        <stop offset="0%" stop-color="#fff1f2" />
+                        <stop offset="28%" stop-color="#fda4af" />
+                        <stop offset="70%" stop-color="#f43f5e" />
+                        <stop offset="100%" stop-color="#9f1239" />
+                    </linearGradient>
+
+                    <!-- Realistic Petal 3D Gradient (Inner Ring) -->
+                    <linearGradient id="petalInnerGrad" x1="50%" y1="0%" x2="50%" y2="100%">
+                        <stop offset="0%" stop-color="#fef08a" />
+                        <stop offset="22%" stop-color="#fda4af" />
+                        <stop offset="65%" stop-color="#e11d48" />
+                        <stop offset="100%" stop-color="#881337" />
+                    </linearGradient>
+
+                    <!-- Lush Golden-Amber Flower Center Disc (3D Spherical) -->
+                    <radialGradient id="flowerDiscGrad" cx="35%" cy="32%" r="68%">
+                        <stop offset="0%" stop-color="#fef9c3" />
+                        <stop offset="30%" stop-color="#facc15" />
+                        <stop offset="72%" stop-color="#d97706" />
+                        <stop offset="92%" stop-color="#92400e" />
+                        <stop offset="100%" stop-color="#451a03" />
+                    </radialGradient>
+
+                    <!-- Glossy 3D Eye Iris Gradient -->
+                    <linearGradient id="eyeIrisGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stop-color="#0f172a" />
+                        <stop offset="55%" stop-color="#1e293b" />
+                        <stop offset="100%" stop-color="#475569" />
+                    </linearGradient>
+
+                    <!-- 3D Dewdrop Gradient -->
+                    <radialGradient id="dewdropGrad" cx="30%" cy="30%" r="70%">
+                        <stop offset="0%" stop-color="#ffffff" stop-opacity="0.95" />
+                        <stop offset="45%" stop-color="#bae6fd" stop-opacity="0.75" />
+                        <stop offset="85%" stop-color="#0284c7" stop-opacity="0.55" />
+                        <stop offset="100%" stop-color="#0369a1" stop-opacity="0.8" />
+                    </radialGradient>
+
+                    <!-- Sunbeam Gradient -->
+                    <linearGradient id="sunRayGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stop-color="#fef08a" stop-opacity="0.45" />
+                        <stop offset="100%" stop-color="#fef08a" stop-opacity="0" />
+                    </linearGradient>
+                </defs>
+
+                <!-- 1. ATMOSPHERIC SUN GOD-RAYS (Visible at High Vitality) -->
+                <g id="sunGodRays" opacity="0.3">
+                    <g class="god-rays">
+                        <polygon points="360,40 280,450 330,450" fill="url(#sunRayGrad)" />
+                        <polygon points="360,40 170,450 230,450" fill="url(#sunRayGrad)" />
+                        <polygon points="360,40 60,450 120,450" fill="url(#sunRayGrad)" />
+                        <polygon points="360,40 370,450 430,450" fill="url(#sunRayGrad)" />
+                    </g>
+                    <circle cx="360" cy="45" r="38" fill="#fef08a" opacity="0.55" filter="url(#softGlow)" />
+                </g>
+
+                <!-- 2. GROUND WOODEN TABLE / SURFACE & AMBIENT OCCLUSION SHADOW -->
+                <ellipse cx="230" cy="422" rx="125" ry="18" fill="rgba(15, 23, 42, 0.22)" />
+                <ellipse cx="230" cy="420" rx="88" ry="11" fill="rgba(15, 23, 42, 0.38)" />
+
+                <!-- 3. POT BACK RIM & SOIL BED -->
+                <g id="soilAndBackRim">
+                    <!-- Inner Dark Pot Cavity -->
+                    <ellipse cx="230" cy="306" rx="78" ry="19" fill="url(#potInnerDark)" />
+
+                    <!-- Dynamic Soil Mound -->
+                    <path id="soilMound" d="M 155,308 Q 230,292 305,308 Q 230,324 155,308 Z" fill="#5c4033" />
+
+                    <!-- Dry Soil Cracks (Visible when 0% - 35% Thirsty) -->
+                    <g id="soilCracksGroup" opacity="0" stroke="#271206" stroke-width="1.8" fill="none" stroke-linecap="round">
+                        <path d="M 185,306 L 198,303 L 206,309 L 195,313" />
+                        <path d="M 252,304 L 265,308 L 276,303" />
+                        <path d="M 265,308 L 269,314" />
+                        <path d="M 218,312 L 232,315 L 240,310" />
+                    </g>
+
+                    <!-- Fallen Curled Dry Leaves on Soil & Rim (Visible when 0% - 38% Wilted) -->
+                    <g id="fallenDryLeavesGroup" opacity="0">
+                        <!-- Left Fallen Curled Leaf on Soil -->
+                        <g id="fallenLeaf1" transform="translate(182, 311) rotate(-14)">
+                            <path d="M -18,0 C -10,-9 8,-8 18,2 C 8,7 -8,6 -18,0 Z" fill="url(#dryLeafTipGrad)" stroke="#451a03" stroke-width="0.8" />
+                            <path d="M -15,0 Q 0,-2 15,2" fill="none" stroke="#ca8a04" stroke-width="1" opacity="0.7" />
+                        </g>
+                        <!-- Right Fallen Curled Leaf near Pot Rim -->
+                        <g id="fallenLeaf2" transform="translate(274, 313) rotate(18)">
+                            <path d="M -16,2 C -6,-8 10,-7 17,0 C 9,6 -6,7 -16,2 Z" fill="#9a3412" stroke="#451a03" stroke-width="0.8" />
+                            <path d="M -13,1 Q 2,-2 14,0" fill="none" stroke="#d97706" stroke-width="1" opacity="0.7" />
+                        </g>
+                        <!-- Small Crispy Leaf Resting near Stem Base -->
+                        <g id="fallenLeaf3" transform="translate(212, 315) rotate(8)">
+                            <path d="M -12,0 C -4,-6 6,-5 12,1 C 5,5 -5,4 -12,0 Z" fill="#854d0e" />
+                        </g>
+                    </g>
+
+                    <!-- Lush Green Moss Patches & Pebbles (Visible when 65% - 100% Healthy) -->
+                    <g id="soilMossGroup" opacity="0.5">
+                        <!-- Pebbles -->
+                        <ellipse cx="182" cy="310" rx="6" ry="3.5" fill="#94a3b8" />
+                        <ellipse cx="191" cy="312" rx="4" ry="2.5" fill="#cbd5e1" />
+                        <!-- Lush Moss Cushions -->
+                        <path d="M 248,309 Q 260,299 275,307 Q 285,302 294,309 Q 270,316 248,309 Z" fill="#4ade80" opacity="0.85" />
+                        <path d="M 162,308 Q 174,300 188,307 Q 175,314 162,308 Z" fill="#22c55e" opacity="0.85" />
+                    </g>
+                </g>
+
+                <!-- 4. BACK LAYER LEAVES (3D Parallax Depth behind the stem, dynamically morphed in JS) -->
+                <g id="backLeavesLayer" filter="url(#dropShadow3D)">
+                    <g id="leafBackL1"></g>
+                    <g id="leafBackR1"></g>
+                    <g id="leafBackL2"></g>
+                    <g id="leafBackR2"></g>
+                </g>
+
+                <!-- 5. PROCEDURAL 3D STEM (Cubic Bezier with Specular Highlight - Single clean layer) -->
+                <g id="stemLayer" filter="url(#dropShadow3D)">
+                    <!-- Main 3D Shaded Stem -->
+                    <path id="mainStemPath" d="" 
+                          fill="none" stroke="url(#stem3DGrad)" stroke-width="15" stroke-linecap="round" />
+                    <!-- Stem Specular Gloss Line (Starts empty & transparent so no static vertical white line ever appears) -->
+                    <path id="stemHighlightPath" d="" 
+                          fill="none" stroke="rgba(220, 255, 190, 0.25)" stroke-opacity="0" stroke-width="3" stroke-linecap="round" />
+                </g>
+
+                <!-- 6. FRONT LAYER LEAVES (Morphing from Limp/Curled/Hanging to Wide/Perky) -->
+                <g id="frontLeavesLayer" filter="url(#dropShadow3D)">
+                    <g id="leafFrontL1"></g>
+                    <g id="leafFrontR1"></g>
+                    <g id="leafFrontL2"></g>
+                    <g id="leafFrontR2"></g>
+                    <g id="leafFrontL3"></g>
+                    <g id="leafFrontR3"></g>
+                </g>
+
+                <!-- 7. FLOWER HEAD / BUD & EXPRESSIVE PIXAR FACE (Attached to Stem Tip) -->
+                <g id="flowerHeadRoot" transform="translate(230, 130)" filter="url(#dropShadow3D)">
+                    
+                    <!-- Green Sepals / Calyx Base (Always visible under flower/bud so it looks like a real botanical head) -->
+                    <g id="calyxGroup">
+                        <path d="M -28,10 Q -15,25 0,18 Q 15,25 28,10 Q 14,-4 0,6 Q -14,-4 -28,10 Z" fill="url(#leafFrontGrad)" />
+                        <path d="M -18,14 Q -8,28 0,20 Q 8,28 18,14" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" stroke-linecap="round" />
+                    </g>
+
+                    <!-- OUTER RING OF 12 INDIVIDUAL 3D PETALS (Unfurl dynamically, or droop as wilted petals) -->
+                    <g id="outerPetalsContainer"></g>
+
+                    <!-- INNER RING OF 12 INDIVIDUAL 3D PETALS -->
+                    <g id="innerPetalsContainer"></g>
+
+                    <!-- CLOSED / SLEEPING / OPENING BUD SHELL (Wraps around head when wilted/budding, peels open as it blooms) -->
+                    <g id="budShellGroup">
+                        <path id="budCenterPetal" d="M 0,14 C -24,2 -22,-32 0,-44 C 22,-32 24,2 0,14 Z" fill="url(#petalOuterGrad)" opacity="0.85" />
+                        <path id="budLeftSepal" d="M -3,16 C -30,6 -32,-24 -8,-40 C -14,-14 -10,4 -3,16 Z" fill="url(#leafFrontGrad)" />
+                        <path id="budRightSepal" d="M 3,16 C 30,6 32,-24 8,-40 C 14,-14 10,4 3,16 Z" fill="url(#leafFrontGrad)" />
+                    </g>
+
+                    <!-- 3D SPHERICAL FLOWER DISC / HEAD WITH PIXAR-STYLE FACE -->
+                    <g id="flowerFaceDisc">
+                        <!-- Main Golden/Greenish-Amber Cushion Disc -->
+                        <circle id="headSphere" cx="0" cy="-6" r="28" fill="url(#flowerDiscGrad)" />
+                        <!-- Textured Seed Rim Dots -->
+                        <circle cx="0" cy="-6" r="25" fill="none" stroke="rgba(120, 53, 15, 0.28)" stroke-width="2.5" stroke-dasharray="2 5" />
+                        <!-- Top 3D Specular Gloss on Head -->
+                        <ellipse cx="-8" cy="-21" rx="12" ry="6" fill="rgba(255, 255, 255, 0.35)" transform="rotate(-18 -8 -21)" />
+
+                        <!-- INTERACTIVE EYE-TRACKING GROUP (Shifts slightly toward mouse cursor!) -->
+                        <g id="eyeTrackingGroup" transform="translate(0, -6)">
+                            
+                            <!-- Rosy 3D Blush Cheeks -->
+                            <ellipse id="blushL" cx="-16" cy="5" rx="5.5" ry="3.2" fill="#f43f5e" opacity="0.45" />
+                            <ellipse id="blushR" cx="16" cy="5" rx="5.5" ry="3.2" fill="#f43f5e" opacity="0.45" />
+
+                            <!-- OPEN GLOSSY 3D EYES (Visible in normal/sad/happy states) -->
+                            <g id="openEyesGroup">
+                                <!-- Left Eye -->
+                                <g transform="translate(-11, -3)">
+                                    <circle cx="0" cy="0" r="5.8" fill="url(#eyeIrisGrad)" />
+                                    <!-- Big Glossy Catchlight -->
+                                    <circle cx="-1.8" cy="-2" r="2.2" fill="#ffffff" />
+                                    <!-- Secondary Bottom Catchlight -->
+                                    <circle cx="1.8" cy="2" r="1.1" fill="#ffffff" opacity="0.85" />
+                                    <!-- Watery Tear Gloss (Visible when sad < 35%) -->
+                                    <ellipse id="wateryTearL" cx="0" cy="4.8" rx="4.5" ry="2" fill="#38bdf8" opacity="0" />
+                                </g>
+                                <!-- Right Eye -->
+                                <g transform="translate(11, -3)">
+                                    <circle cx="0" cy="0" r="5.8" fill="url(#eyeIrisGrad)" />
+                                    <circle cx="-1.8" cy="-2" r="2.2" fill="#ffffff" />
+                                    <circle cx="1.8" cy="2" r="1.1" fill="#ffffff" opacity="0.85" />
+                                    <ellipse id="wateryTearR" cx="0" cy="4.8" rx="4.5" ry="2" fill="#38bdf8" opacity="0" />
+                                </g>
+                            </g>
+
+                            <!-- JOYFUL HAPPY ARC EYES (Visible during blink or extreme joy bounce) -->
+                            <g id="happyArcEyesGroup" display="none" stroke="#1e293b" stroke-width="2.8" fill="none" stroke-linecap="round">
+                                <path d="M -16,-2 Q -11,-9 -6,-2" />
+                                <path d="M 6,-2 Q 11,-9 16,-2" />
+                            </g>
+
+                            <!-- DYNAMIC EYELIDS / EYEBROWS (Morph from sad/worried to cheerful) -->
+                            <path id="eyebrowL" d="M -17,-10 Q -11,-13 -5,-10" fill="none" stroke="#451a03" stroke-width="2.2" stroke-linecap="round" />
+                            <path id="eyebrowR" d="M 5,-10 Q 11,-13 17,-10" fill="none" stroke="#451a03" stroke-width="2.2" stroke-linecap="round" />
+
+                            <!-- DYNAMIC MOUTH (Morphs smoothly from trembling frown to joyful open smile) -->
+                            <path id="mouthOuter" d="M -7,5 Q 0,12 7,5" fill="none" stroke="#451a03" stroke-width="2.6" stroke-linecap="round" />
+                            <!-- Open Joyful Mouth Cavity & Tongue (Scales in at >65% Vitality) -->
+                            <g id="mouthOpenGroup" transform="translate(0, 5) scale(0)">
+                                <path d="M -8,0 Q 0,14 8,0 Z" fill="#881337" />
+                                <path d="M -5,5 Q 0,2 5,5 Q 0,11 -5,5 Z" fill="#fb7185" />
+                            </g>
+                        </g>
+                    </g>
+                </g>
+
+                <!-- 8. FRONT TERRACOTTA POT BODY & 3D RIM (Layered in front of stem base so plant grows from inside pot) -->
+                <g id="potFrontGroup" filter="url(#dropShadow3D)">
+                    <!-- Main Tapered Terracotta Pot Body -->
+                    <path d="M 152,314 L 308,314 L 284,414 C 281,422 273,426 264,426 L 196,426 C 187,426 179,422 176,414 Z" 
+                          fill="url(#terracottaBody)" />
+
+                    <!-- Subtle Decorative Embossed Ring on Pot -->
+                    <path d="M 164,364 Q 230,376 296,364" fill="none" stroke="rgba(124, 45, 18, 0.45)" stroke-width="3" />
+                    <path d="M 164,366 Q 230,378 296,366" fill="none" stroke="rgba(253, 186, 116, 0.35)" stroke-width="2" />
+
+                    <!-- 3D Cylindrical Left Specular Highlight on Pot Body -->
+                    <path d="M 168,328 L 188,412" fill="none" stroke="rgba(255, 237, 213, 0.32)" stroke-width="10" stroke-linecap="round" />
+
+                    <!-- Front Curved Pot Lip / Rim (Covers the front edge of soil) -->
+                    <path d="M 140,304 C 140,297 146,294 154,294 C 205,304 255,304 306,294 C 314,294 320,297 320,304 L 318,320 C 317,326 311,329 304,330 C 255,340 205,340 156,330 C 149,329 143,326 142,320 Z" 
+                          fill="url(#terracottaRim)" />
+                    
+                    <!-- Crisp Rim Specular Highlight -->
+                    <path d="M 152,304 Q 230,315 308,304" fill="none" stroke="rgba(255, 255, 255, 0.45)" stroke-width="3" stroke-linecap="round" />
+                </g>
+
+                <!-- 9. ANIMATED 3D BUTTERFLY (Flutters in & orbits flower when Vitality > 80%) -->
+                <g id="butterflyGroup" transform="translate(360, 80) scale(0)" opacity="0">
+                    <g id="butterflyWings">
+                        <!-- Upper Wing -->
+                        <path d="M 0,0 C -18,-24 -34,-12 -22,4 C -14,10 -4,4 0,0 Z" fill="#f59e0b" stroke="#1e293b" stroke-width="1.5" />
+                        <path d="M 0,0 C 18,-24 34,-12 22,4 C 14,10 4,4 0,0 Z" fill="#fbbf24" stroke="#1e293b" stroke-width="1.5" />
+                        <!-- Wing Spots -->
+                        <circle cx="-15" cy="-7" r="3" fill="#fef08a" />
+                        <circle cx="15" cy="-7" r="3" fill="#fef08a" />
+                        <!-- Lower Wing -->
+                        <path d="M 0,2 C -16,6 -22,22 -8,20 C -2,18 0,8 0,2 Z" fill="#fb7185" stroke="#1e293b" stroke-width="1.5" />
+                        <path d="M 0,2 C 16,6 22,22 8,20 C 2,18 0,8 0,2 Z" fill="#f43f5e" stroke="#1e293b" stroke-width="1.5" />
+                    </g>
+                    <!-- Butterfly Body -->
+                    <ellipse cx="0" cy="4" rx="2.2" ry="9" fill="#1e293b" />
+                </g>
+            </svg>
+
+            <!-- Interactive Floating Tooltip Hint -->
+            <div class="absolute bottom-3 left-1/2 -translate-x-1/2 backdrop-blur-sm bg-slate-900/60 text-white text-[11px] font-medium px-3 py-1 rounded-full pointer-events-none">
+                ✨ Tip: Click the plant or use buttons below for physics reactions
+            </div>
+        </div>
+
+        <!-- CONTROLS & INTERACTION DECK -->
+        <div class="p-5 sm:p-6 bg-white border-t border-slate-100">
+            
+            <!-- Slider Header + Quick Care Action Buttons -->
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                <div class="flex items-center gap-1.5">
+                    <span class="text-xs font-extrabold uppercase tracking-wider text-slate-500">🌱 Growth & Mood Slider</span>
+                </div>
+
+                <!-- Interactive Care Boosters -->
+                <div class="flex items-center gap-2">
+                    <button id="btnWater" class="tactile-btn bg-sky-50 hover:bg-sky-100 text-sky-800 border border-sky-200 text-xs font-bold px-3 py-1.5 rounded-xl flex items-center gap-1">
+                        <span>💧</span> Water <span class="text-[10px] text-sky-600">+15%</span>
+                    </button>
+                    <button id="btnSun" class="tactile-btn bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 text-xs font-bold px-3 py-1.5 rounded-xl flex items-center gap-1">
+                        <span>☀️</span> Sun <span class="text-[10px] text-amber-600">+15%</span>
+                    </button>
+                    <button id="btnBreeze" class="tactile-btn bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-bold px-3 py-1.5 rounded-xl flex items-center gap-1">
+                        <span>🌬️</span> Breeze
+                    </button>
+                </div>
+            </div>
+
+            <!-- Main Smooth Range Slider -->
+            <div class="my-2">
+                <input 
+                    id="vitalitySlider" 
+                    type="range" 
+                    min="0" 
+                    max="100" 
+                    step="0.5"
+                    value="65" 
+                    class="vitality-slider"
+                    aria-label="Plant vitality percentage"
+                />
+            </div>
+
+            <!-- 5 Quick Stage Presets -->
+            <div class="grid grid-cols-5 gap-2 mt-4">
+                <button data-preset="0" class="preset-trigger tactile-btn bg-stone-100 hover:bg-stone-200 text-slate-700 rounded-xl py-2 flex flex-col items-center border border-stone-300">
+                    <span class="text-base">🥀</span>
+                    <span class="text-[10px] font-bold mt-0.5">Murjhaya (0%)</span>
+                </button>
+                <button data-preset="25" class="preset-trigger tactile-btn bg-amber-50 hover:bg-amber-100 text-slate-700 rounded-xl py-2 flex flex-col items-center border border-amber-200">
+                    <span class="text-base">🥺</span>
+                    <span class="text-[10px] font-bold mt-0.5">Pyasa (25%)</span>
+                </button>
+                <button data-preset="50" class="preset-trigger tactile-btn bg-lime-50 hover:bg-lime-100 text-slate-700 rounded-xl py-2 flex flex-col items-center border border-lime-200">
+                    <span class="text-base">🌱</span>
+                    <span class="text-[10px] font-bold mt-0.5">Healthy (50%)</span>
+                </button>
+                <button data-preset="75" class="preset-trigger tactile-btn bg-emerald-50 hover:bg-emerald-100 text-slate-700 rounded-xl py-2 flex flex-col items-center border border-emerald-200">
+                    <span class="text-base">🌷</span>
+                    <span class="text-[10px] font-bold mt-0.5">Kali (75%)</span>
+                </button>
+                <button data-preset="100" class="preset-trigger tactile-btn bg-rose-50 hover:bg-rose-100 text-slate-800 rounded-xl py-2 flex flex-col items-center border border-rose-200">
+                    <span class="text-base">🌸</span>
+                    <span class="text-[10px] font-bold mt-0.5">Khila Hua!</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Copy Toast Notification -->
+    <div id="toastNotification" class="fixed bottom-5 bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-2xl border border-slate-700 text-xs sm:text-sm font-semibold opacity-0 pointer-events-none transition-all duration-300 transform translate-y-4 z-50">
+        ✅ Self-contained 3D Plant Widget copied to clipboard!
+    </div>
+
+    <script>
+        (function() {
+            // ============================================================================
+            // 1. PROCEDURALLY GENERATE 24 LAYERED 3D PETALS IN SVG
+            // ============================================================================
+            const outerPetalsContainer = document.getElementById('outerPetalsContainer');
+            const innerPetalsContainer = document.getElementById('innerPetalsContainer');
+            const NUM_PETALS = 12;
+            const outerPetalEls = [];
+            const innerPetalEls = [];
+
+            for (let i = 0; i < NUM_PETALS; i++) {
+                const angle = (i * 360) / NUM_PETALS;
+                const outerG = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                outerG.innerHTML = `
+                    <path d="M 0,0 C -13,-16 -17,-48 0,-64 C 17,-48 13,-16 0,0 Z" fill="url(#petalOuterGrad)" />
+                    <path d="M 0,-8 L 0,-54" stroke="rgba(255,255,255,0.45)" stroke-width="1.5" stroke-linecap="round" />
+                `;
+                outerPetalsContainer.appendChild(outerG);
+                outerPetalEls.push({ el: outerG, baseAngle: angle, index: i });
+
+                const innerAngle = angle + (180 / NUM_PETALS);
+                const innerG = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                innerG.innerHTML = `
+                    <path d="M 0,0 C -11,-14 -14,-40 0,-52 C 14,-40 11,-14 0,0 Z" fill="url(#petalInnerGrad)" />
+                `;
+                innerPetalsContainer.appendChild(innerG);
+                innerPetalEls.push({ el: innerG, baseAngle: innerAngle, index: i });
+            }
+
+            // ============================================================================
+            // 2. DOM REFERENCES & SPRING PHYSICS STATE
+            // ============================================================================
+            const slider = document.getElementById('vitalitySlider');
+            const stageContainer = document.getElementById('stageContainer');
+            const vitalityPercent = document.getElementById('vitalityPercent');
+            const vitalityDot = document.getElementById('vitalityDot');
+            const statusEmoji = document.getElementById('statusEmoji');
+            const statusTitle = document.getElementById('statusTitle');
+            const statusSub = document.getElementById('statusSub');
+
+            // SVG Dynamic Elements
+            const mainStemPath = document.getElementById('mainStemPath');
+            const stemHighlightPath = document.getElementById('stemHighlightPath');
+            const stemStop1 = document.getElementById('stemStop1');
+            const stemStop2 = document.getElementById('stemStop2');
+            const stemStop3 = document.getElementById('stemStop3');
+
+            const leafFStop1 = document.getElementById('leafFStop1');
+            const leafFStop2 = document.getElementById('leafFStop2');
+            const leafFStop3 = document.getElementById('leafFStop3');
+            const leafBStop1 = document.getElementById('leafBStop1');
+            const leafBStop2 = document.getElementById('leafBStop2');
+
+            const soilMound = document.getElementById('soilMound');
+            const soilCracksGroup = document.getElementById('soilCracksGroup');
+            const fallenDryLeavesGroup = document.getElementById('fallenDryLeavesGroup');
+            const soilMossGroup = document.getElementById('soilMossGroup');
+            const sunGodRays = document.getElementById('sunGodRays');
+
+            const leafSlots = {
+                frontL1: document.getElementById('leafFrontL1'),
+                frontR1: document.getElementById('leafFrontR1'),
+                frontL2: document.getElementById('leafFrontL2'),
+                frontR2: document.getElementById('leafFrontR2'),
+                frontL3: document.getElementById('leafFrontL3'),
+                frontR3: document.getElementById('leafFrontR3'),
+                backL1: document.getElementById('leafBackL1'),
+                backR1: document.getElementById('leafBackR1'),
+                backL2: document.getElementById('leafBackL2'),
+                backR2: document.getElementById('leafBackR2')
+            };
+
+            // Build morphable SVG sub-elements inside each leaf slot so leaves can physically curl & hang when wilted!
+            const morphLeaves = {};
+            Object.keys(leafSlots).forEach((key) => {
+                const container = leafSlots[key];
+                const isBack = key.startsWith('back');
+                const hasDew = (key === 'frontL1' || key === 'frontR1' || key === 'frontL2');
+                container.innerHTML = `
+                    <path class="leaf-blade" fill="url(#${isBack ? 'leafBackGrad' : 'leafFrontGrad'})" />
+                    <path class="leaf-dry-tip" fill="url(#dryLeafTipGrad)" opacity="0" />
+                    <path class="leaf-highlight" fill="none" stroke="rgba(255,255,255,0.42)" stroke-width="2" stroke-linecap="round" />
+                    <path class="leaf-midrib" fill="none" stroke="#bef264" stroke-width="2.5" stroke-linecap="round" opacity="0.78" />
+                    <path class="leaf-vein1" fill="none" stroke="#bef264" stroke-width="1.4" stroke-linecap="round" opacity="0.6" />
+                    <path class="leaf-vein2" fill="none" stroke="#bef264" stroke-width="1.3" stroke-linecap="round" opacity="0.6" />
+                    <path class="leaf-vein3" fill="none" stroke="#bef264" stroke-width="1.4" stroke-linecap="round" opacity="0.6" />
+                    ${hasDew ? `<circle class="leaf-dew" cx="0" cy="0" r="4" fill="url(#dewdropGrad)" opacity="0" />` : ''}
+                `;
+                morphLeaves[key] = {
+                    group: container,
+                    blade: container.querySelector('.leaf-blade'),
+                    dryTip: container.querySelector('.leaf-dry-tip'),
+                    highlight: container.querySelector('.leaf-highlight'),
+                    midrib: container.querySelector('.leaf-midrib'),
+                    vein1: container.querySelector('.leaf-vein1'),
+                    vein2: container.querySelector('.leaf-vein2'),
+                    vein3: container.querySelector('.leaf-vein3'),
+                    dew: container.querySelector('.leaf-dew')
+                };
+            });
+
+            const flowerHeadRoot = document.getElementById('flowerHeadRoot');
+            const budShellGroup = document.getElementById('budShellGroup');
+            const budLeftSepal = document.getElementById('budLeftSepal');
+            const budRightSepal = document.getElementById('budRightSepal');
+            const budCenterPetal = document.getElementById('budCenterPetal');
+            const flowerFaceDisc = document.getElementById('flowerFaceDisc');
+
+            // Face Elements
+            const eyeTrackingGroup = document.getElementById('eyeTrackingGroup');
+            const openEyesGroup = document.getElementById('openEyesGroup');
+            const happyArcEyesGroup = document.getElementById('happyArcEyesGroup');
+            const wateryTearL = document.getElementById('wateryTearL');
+            const wateryTearR = document.getElementById('wateryTearR');
+            const eyebrowL = document.getElementById('eyebrowL');
+            const eyebrowR = document.getElementById('eyebrowR');
+            const mouthOuter = document.getElementById('mouthOuter');
+            const mouthOpenGroup = document.getElementById('mouthOpenGroup');
+            const blushL = document.getElementById('blushL');
+            const blushR = document.getElementById('blushR');
+            const butterflyGroup = document.getElementById('butterflyGroup');
+            const butterflyWings = document.getElementById('butterflyWings');
+
+            // Physics & Animation State
+            const state = {
+                targetVal: 65,
+                currentVal: 65,
+                velVal: 0,
+                windSway: 0,
+                windVel: 0,
+                headBounce: 0,
+                headBounceVel: 0,
+                mouseX: 0,
+                mouseY: 0,
+                smoothMouseX: 0,
+                smoothMouseY: 0,
+                isBlinking: false,
+                joyBlinkTimer: 0,
+                time: 0
+            };
+
+            // ============================================================================
+            // 3. MATH & COLOR INTERPOLATION HELPERS
+            // ============================================================================
+            function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
+            function lerp(a, b, t) { return a + (b - a) * clamp(t, 0, 1); }
+
+            function lerpHexColor(h1, h2, t) {
+                t = clamp(t, 0, 1);
+                const c1 = parseInt(h1.slice(1), 16);
+                const c2 = parseInt(h2.slice(1), 16);
+                const r = Math.round(lerp((c1 >> 16) & 255, (c2 >> 16) & 255, t));
+                const g = Math.round(lerp((c1 >> 8) & 255, (c2 >> 8) & 255, t));
+                const b = Math.round(lerp(c1 & 255, c2 & 255, t));
+                return `rgb(${r},${g},${b})`;
+            }
+
+            // Evaluate point & tangent angle on a Cubic Bezier curve at parameter u (0..1)
+            function getCubicBezierPointAndAngle(u, p0, p1, p2, p3) {
+                const mu = 1 - u;
+                const mu2 = mu * mu;
+                const mu3 = mu2 * mu;
+                const u2 = u * u;
+                const u3 = u2 * u;
+
+                const x = mu3 * p0.x + 3 * mu2 * u * p1.x + 3 * mu * u2 * p2.x + u3 * p3.x;
+                const y = mu3 * p0.y + 3 * mu2 * u * p1.y + 3 * mu * u2 * p2.y + u3 * p3.y;
+
+                // Derivative for tangent vector
+                const dx = 3 * mu2 * (p1.x - p0.x) + 6 * mu * u * (p2.x - p1.x) + 3 * u2 * (p3.x - p2.x);
+                const dy = 3 * mu2 * (p1.y - p0.y) + 6 * mu * u * (p2.y - p1.y) + 3 * u2 * (p3.y - p2.y);
+                // Angle relative to straight-up vertical stem (0 deg when pointing straight up)
+                const tangentDeg = Math.atan2(dx, -dy) * (180 / Math.PI);
+
+                return { x, y, tangentDeg };
+            }
+
+            // Morph individual leaf geometry from Wilted/Curled/Drooping (h=0) to Wide/Perky/Lush (h=1)
+            function updateLeafGeometry(mLeaf, isLeft, hydration, isBackLayer) {
+                const s = isLeft ? -1 : 1;
+                const h = clamp(hydration, 0, 1);
+
+                // At h=0 (wilted): Leaf arches out slightly then hangs heavily downward with an inward curled, wavy tip!
+                // At h=1 (healthy): Leaf reaches out wide and perky with full volume.
+                const topC1x = s * lerp(18, 20, h);
+                const topC1y = lerp(-4, -27, h);
+                const topC2x = s * lerp(48, 60, h);
+                const topC2y = lerp(16, -30, h);
+                const tipX   = s * lerp(64, 86, h);
+                const tipY   = lerp(54, -6, h); // Hangs down to +54px when wilted!
+                const botC1x = s * lerp(42, 68, h);
+                const botC1y = lerp(46, 22, h);
+                const botC2x = s * lerp(20, 30, h);
+                const botC2y = lerp(18, 24, h);
+
+                const bladeD = `M 0,0 C ${topC1x},${topC1y} ${topC2x},${topC2y} ${tipX},${tipY} C ${botC1x},${botC1y} ${botC2x},${botC2y} 0,0 Z`;
+                mLeaf.blade.setAttribute('d', bladeD);
+
+                // Crispy browned leaf tip overlay when wilted (fades out completely above 42%)
+                const dryOpacity = isBackLayer ? 0 : clamp(1 - (h / 0.42), 0, 0.88);
+                mLeaf.dryTip.setAttribute('opacity', dryOpacity);
+                if (dryOpacity > 0.01) {
+                    const midTopX = s * lerp(46, 58, h);
+                    const midTopY = lerp(22, -18, h);
+                    const midBotX = s * lerp(38, 54, h);
+                    const midBotY = lerp(36, 10, h);
+                    mLeaf.dryTip.setAttribute('d', `M ${midTopX},${midTopY} Q ${s * 56},${lerp(36, -12, h)} ${tipX},${tipY} Q ${s * 50},${lerp(46, 8, h)} ${midBotX},${midBotY} Z`);
+                }
+
+                // Specular top rim highlight
+                mLeaf.highlight.setAttribute('d', `M ${s * 3},-1 C ${topC1x},${topC1y + 2} ${topC2x},${topC2y + 2} ${tipX * 0.93},${tipY * 0.93}`);
+
+                // Central Midrib Vein following the droop curve
+                const midCtrlX = s * lerp(36, 42, h);
+                const midCtrlY = lerp(14, -8, h);
+                mLeaf.midrib.setAttribute('d', `M 0,0 Q ${midCtrlX},${midCtrlY} ${tipX * 0.92},${tipY * 0.92}`);
+                const veinColor = lerpHexColor('#d97706', '#bef264', clamp(h * 1.4, 0, 1));
+                mLeaf.midrib.setAttribute('stroke', veinColor);
+
+                // Lateral Veins
+                const v1StartX = s * lerp(18, 22, h);
+                const v1StartY = lerp(6, -4, h);
+                const v1EndX   = s * lerp(32, 43, h);
+                const v1EndY   = lerp(8, -16, h);
+                mLeaf.vein1.setAttribute('d', `M ${v1StartX},${v1StartY} Q ${(v1StartX + v1EndX) * 0.5},${v1StartY - 5} ${v1EndX},${v1EndY}`);
+                mLeaf.vein1.setAttribute('stroke', veinColor);
+
+                const v2StartX = s * lerp(34, 42, h);
+                const v2StartY = lerp(16, -6, h);
+                const v2EndX   = s * lerp(48, 62, h);
+                const v2EndY   = lerp(22, -14, h);
+                mLeaf.vein2.setAttribute('d', `M ${v2StartX},${v2StartY} Q ${(v2StartX + v2EndX) * 0.5},${v2StartY - 4} ${v2EndX},${v2EndY}`);
+                mLeaf.vein2.setAttribute('stroke', veinColor);
+
+                const v3StartX = s * lerp(24, 28, h);
+                const v3StartY = lerp(10, -4, h);
+                const v3EndX   = s * lerp(34, 50, h);
+                const v3EndY   = lerp(26, 8, h);
+                mLeaf.vein3.setAttribute('d', `M ${v3StartX},${v3StartY} Q ${(v3StartX + v3EndX) * 0.5},${v3EndY} ${v3EndX},${v3EndY}`);
+                mLeaf.vein3.setAttribute('stroke', veinColor);
+
+                // Position Dewdrop on healthy leaf blade
+                if (mLeaf.dew) {
+                    const dewOp = clamp((h - 0.55) / 0.3, 0, 1);
+                    mLeaf.dew.setAttribute('opacity', dewOp);
+                    mLeaf.dew.setAttribute('cx', s * 48);
+                    mLeaf.dew.setAttribute('cy', lerp(20, -3, h));
+                }
+            }
+
+            // ============================================================================
+            // 4. HTML5 CANVAS PARTICLE SYSTEM (Water Splashes, Rain, Golden Pollen)
+            // ============================================================================
+            const fxCanvas = document.getElementById('fxCanvas');
+            const ctx = fxCanvas.getContext('2d');
+            let particles = [];
+
+            function resizeCanvas() {
+                const rect = stageContainer.getBoundingClientRect();
+                fxCanvas.width = rect.width;
+                fxCanvas.height = rect.height;
+            }
+            window.addEventListener('resize', resizeCanvas);
+            resizeCanvas();
+
+            function spawnWaterSplash(originX, originY, count = 18) {
+                for (let i = 0; i < count; i++) {
+                    const angle = -Math.PI * 0.15 - Math.random() * Math.PI * 0.7;
+                    const speed = 2.5 + Math.random() * 5.5;
+                    particles.push({
+                        type: 'water',
+                        x: originX + (Math.random() - 0.5) * 30,
+                        y: originY + (Math.random() - 0.5) * 20,
+                        vx: Math.cos(angle) * speed,
+                        vy: Math.sin(angle) * speed,
+                        r: 3 + Math.random() * 4,
+                        alpha: 1,
+                        life: 0,
+                        maxLife: 45 + Math.random() * 20
+                    });
+                }
+            }
+
+            function spawnSunlightSparkles(originX, originY, count = 14) {
+                for (let i = 0; i < count; i++) {
+                    particles.push({
+                        type: 'pollen',
+                        x: originX + (Math.random() - 0.5) * 140,
+                        y: originY + (Math.random() - 0.5) * 100,
+                        vx: (Math.random() - 0.5) * 1.2,
+                        vy: -0.8 - Math.random() * 1.5,
+                        r: 2.5 + Math.random() * 3.5,
+                        alpha: 1,
+                        life: 0,
+                        maxLife: 65 + Math.random() * 35
+                    });
+                }
+            }
+
+            function updateAndDrawParticles(tNorm) {
+                ctx.clearRect(0, 0, fxCanvas.width, fxCanvas.height);
+
+                // Ambient Continuous Particles based on Vitality
+                if (tNorm < 0.28 && Math.random() < 0.22) {
+                    // Gloomy drizzle drops when wilted
+                    particles.push({
+                        type: 'rain',
+                        x: Math.random() * fxCanvas.width,
+                        y: -10,
+                        vx: -0.5,
+                        vy: 6 + Math.random() * 3,
+                        r: 1.5,
+                        alpha: 0.45,
+                        life: 0,
+                        maxLife: 80
+                    });
+                } else if (tNorm > 0.72 && Math.random() < 0.18) {
+                    // Floating golden pollen motes when blooming
+                    particles.push({
+                        type: 'pollen',
+                        x: fxCanvas.width * 0.25 + Math.random() * fxCanvas.width * 0.5,
+                        y: fxCanvas.height * 0.75,
+                        vx: (Math.random() - 0.5) * 0.6,
+                        vy: -0.6 - Math.random() * 0.8,
+                        r: 2 + Math.random() * 2.5,
+                        alpha: 0.85,
+                        life: 0,
+                        maxLife: 110
+                    });
+                }
+
+                for (let i = particles.length - 1; i >= 0; i--) {
+                    const p = particles[i];
+                    p.life++;
+                    p.x += p.vx;
+                    p.y += p.vy;
+
+                    if (p.type === 'water') {
+                        p.vy += 0.24; // gravity
+                        p.alpha = 1 - (p.life / p.maxLife);
+                        ctx.save();
+                        ctx.beginPath();
+                        ctx.fillStyle = `rgba(56, 189, 248, ${p.alpha})`;
+                        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                        ctx.fill();
+                        // White specular dot on droplet
+                        ctx.beginPath();
+                        ctx.fillStyle = `rgba(255, 255, 255, ${p.alpha * 0.9})`;
+                        ctx.arc(p.x - p.r * 0.3, p.y - p.r * 0.3, p.r * 0.35, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.restore();
+                    } else if (p.type === 'pollen') {
+                        p.vx += Math.sin(state.time * 3 + i) * 0.02;
+                        const fade = Math.sin((p.life / p.maxLife) * Math.PI);
+                        ctx.save();
+                        ctx.beginPath();
+                        ctx.shadowColor = '#facc15';
+                        ctx.shadowBlur = 8;
+                        ctx.fillStyle = `rgba(254, 240, 138, ${fade * p.alpha})`;
+                        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.restore();
+                    } else if (p.type === 'rain') {
+                        ctx.save();
+                        ctx.strokeStyle = `rgba(148, 163, 184, ${p.alpha})`;
+                        ctx.lineWidth = 1.8;
+                        ctx.beginPath();
+                        ctx.moveTo(p.x, p.y);
+                        ctx.lineTo(p.x + p.vx * 2, p.y + p.vy * 1.8);
+                        ctx.stroke();
+                        ctx.restore();
+                    }
+
+                    if (p.life >= p.maxLife || p.y > fxCanvas.height + 20) {
+                        particles.splice(i, 1);
+                    }
+                }
+            }
+
+            // ============================================================================
+            // 5. MAIN 60FPS PROCEDURAL BOTANICAL & PHYSICS RENDER LOOP
+            // ============================================================================
+            function updateStatusUI(val) {
+                const rounded = Math.round(val);
+                vitalityPercent.textContent = rounded;
+
+                if (val <= 20) {
+                    statusEmoji.textContent = '🥀';
+                    statusTitle.textContent = 'Severely Wilted';
+                    statusSub.textContent = 'Soil Cracked & Parched';
+                    vitalityDot.className = 'w-2 h-2 rounded-full bg-rose-500 animate-ping';
+                    stageContainer.style.background = 'linear-gradient(180deg, #cbd5e1 0%, #e2e8f0 65%, #f1f5f9 100%)';
+                } else if (val <= 45) {
+                    statusEmoji.textContent = '🥺';
+                    statusTitle.textContent = 'Drooping & Thirsty';
+                    statusSub.textContent = 'Needs Water & Care';
+                    vitalityDot.className = 'w-2 h-2 rounded-full bg-amber-400 animate-pulse';
+                    stageContainer.style.background = 'linear-gradient(180deg, #e0f2fe 0%, #fef3c7 70%, #fde68a 100%)';
+                } else if (val <= 74) {
+                    statusEmoji.textContent = '🌿';
+                    statusTitle.textContent = 'Lush & Thriving';
+                    statusSub.textContent = 'Strong Stem & Glossy Leaves';
+                    vitalityDot.className = 'w-2 h-2 rounded-full bg-lime-400 animate-pulse';
+                    stageContainer.style.background = 'linear-gradient(180deg, #dbeafe 0%, #ecfccb 65%, #fef9c3 100%)';
+                } else if (val <= 88) {
+                    statusEmoji.textContent = '🌷';
+                    statusTitle.textContent = 'Unfurling Blossom';
+                    statusSub.textContent = 'Petals Opening Smoothly';
+                    vitalityDot.className = 'w-2 h-2 rounded-full bg-emerald-400 animate-pulse';
+                    stageContainer.style.background = 'linear-gradient(180deg, #bae6fd 0%, #dcfce7 60%, #fef08a 100%)';
+                } else {
+                    statusEmoji.textContent = '🌸';
+                    statusTitle.textContent = 'Radiant Full Bloom!';
+                    statusSub.textContent = 'Pollen Glow & Butterfly Friend';
+                    vitalityDot.className = 'w-2 h-2 rounded-full bg-emerald-400 animate-ping';
+                    stageContainer.style.background = 'linear-gradient(180deg, #fef9c3 0%, #dcfce7 55%, #bbf7d0 100%)';
+                }
+            }
+
+            // Automatic periodic eye blinking
+            setInterval(() => {
+                if (state.currentVal > 20) {
+                    state.isBlinking = true;
+                    setTimeout(() => { state.isBlinking = false; }, 160);
+                }
+            }, 3800);
+
+            function animateFrame() {
+                state.time += 0.016;
+
+                // 1. Spring Physics for Vitality Value
+                const valForce = (state.targetVal - state.currentVal) * 0.12;
+                state.velVal = (state.velVal + valForce) * 0.78;
+                state.currentVal += state.velVal;
+
+                // Feed slider velocity into natural stem sway impulse
+                state.windVel += state.velVal * 0.12;
+
+                // 2. Spring Physics for Wind Sway & Head Bounce
+                const ambientBreeze = Math.sin(state.time * 1.9) * (1.8 + (state.currentVal / 100) * 2.5);
+                const windForce = (ambientBreeze - state.windSway) * 0.06;
+                state.windVel = (state.windVel + windForce) * 0.88;
+                state.windSway += state.windVel;
+
+                const bounceForce = (0 - state.headBounce) * 0.15;
+                state.headBounceVel = (state.headBounceVel + bounceForce) * 0.82;
+                state.headBounce += state.headBounceVel;
+
+                // Smooth mouse tracking
+                state.smoothMouseX += (state.mouseX - state.smoothMouseX) * 0.1;
+                state.smoothMouseY += (state.mouseY - state.smoothMouseY) * 0.1;
+
+                const val = clamp(state.currentVal, 0, 100);
+                const t = val / 100; // 0.0 to 1.0
+
+                updateStatusUI(val);
+
+                // 3. Natural Botanical Color Palette Transition:
+                // Muted Olive-Sage with Ochre/Brown edges (0%) -> Fresh Lime Green (45%) -> Deep Lush Emerald (100%)
+                if (t < 0.45) {
+                    const k = t / 0.45;
+                    stemStop1.setAttribute('stop-color', lerpHexColor('#a3a15c', '#bef264', k));
+                    stemStop2.setAttribute('stop-color', lerpHexColor('#6b7032', '#65a30d', k));
+                    stemStop3.setAttribute('stop-color', lerpHexColor('#3f3f1d', '#365314', k));
+
+                    leafFStop1.setAttribute('stop-color', lerpHexColor('#b59e42', '#bef264', k));
+                    leafFStop2.setAttribute('stop-color', lerpHexColor('#747833', '#65a30d', k));
+                    leafFStop3.setAttribute('stop-color', lerpHexColor('#4a3f19', '#365314', k));
+
+                    leafBStop1.setAttribute('stop-color', lerpHexColor('#7c7634', '#4ade80', k));
+                    leafBStop2.setAttribute('stop-color', lerpHexColor('#47451d', '#15803d', k));
+                } else {
+                    const k = (t - 0.45) / 0.55;
+                    stemStop1.setAttribute('stop-color', lerpHexColor('#bef264', '#86efac', k));
+                    stemStop2.setAttribute('stop-color', lerpHexColor('#65a30d', '#16a34a', k));
+                    stemStop3.setAttribute('stop-color', lerpHexColor('#365314', '#064e3b', k));
+
+                    leafFStop1.setAttribute('stop-color', lerpHexColor('#bef264', '#a3e635', k));
+                    leafFStop2.setAttribute('stop-color', lerpHexColor('#65a30d', '#16a34a', k));
+                    leafFStop3.setAttribute('stop-color', lerpHexColor('#365314', '#14532d', k));
+
+                    leafBStop1.setAttribute('stop-color', lerpHexColor('#4ade80', '#22c55e', k));
+                    leafBStop2.setAttribute('stop-color', lerpHexColor('#15803d', '#064e3b', k));
+                }
+
+                // 4. Soil Moisture, Cracks, Fallen Dry Leaves & Moss Transition
+                soilMound.setAttribute('fill', lerpHexColor('#9c7a54', '#3b2314', t));
+                soilCracksGroup.setAttribute('opacity', clamp(1 - (t / 0.35), 0, 0.85));
+                // Fallen dry leaves clearly rest on dry soil at 0%-35% and shrink/fade as hydrated
+                const fallenOp = clamp(1 - (t / 0.38), 0, 1);
+                fallenDryLeavesGroup.setAttribute('opacity', fallenOp);
+
+                soilMossGroup.setAttribute('opacity', clamp((t - 0.5) / 0.45, 0, 1));
+                sunGodRays.setAttribute('opacity', clamp((t - 0.55) / 0.45, 0, 0.9));
+
+                // 5. Realistic Botanical Stem Curve (Substantial height even at 0%, arching into a classic thirsty "neck droop")
+                const p0 = { x: 230, y: 312 }; // Root anchored in pot soil
+                const shiver = val < 15 ? Math.sin(state.time * 26) * (1 - val / 15) * 1.1 : 0;
+
+                // Smoothly uncurl stem from a graceful hanging C-arch (0% -> 50%) to tall & proud (50% -> 100%)
+                const wiltFactor = Math.pow(clamp(1 - (t / 0.55), 0, 1), 1.35);
+                const droopX = -66 * wiltFactor; // Bends gracefully toward the left pot rim
+                const cursorTiltX = state.smoothMouseX * 14 * (0.35 + 0.65 * t);
+
+                // Even at 0%, stem rises first before arching over so all leaves have room to hang clearly!
+                const tipX = 230 + droopX + state.windSway + cursorTiltX + shiver;
+                const tipY = lerp(194, 118, Math.pow(t, 0.78)) + state.headBounce + Math.abs(state.windSway) * 0.25;
+
+                // Control Point 1: Rises up out of the pot even when wilted
+                const p1 = {
+                    x: 230 + droopX * 0.08 + state.windSway * 0.25,
+                    y: lerp(225, 245, t)
+                };
+                // Control Point 2: Forms the high arch of the drooping neck at low vitality
+                const p2 = {
+                    x: 230 + droopX * 0.55 - Math.sin(t * Math.PI) * 14 + state.windSway * 0.65,
+                    y: lerp(152, 175, t)
+                };
+                const p3 = { x: tipX, y: tipY };
+
+                const stemD = `M ${p0.x},${p0.y} C ${p1.x},${p1.y} ${p2.x},${p2.y} ${p3.x},${p3.y}`;
+                mainStemPath.setAttribute('d', stemD);
+                stemHighlightPath.setAttribute('d', `M ${p0.x - 1.5},${p0.y} C ${p1.x - 1.5},${p1.y} ${p2.x - 1.5},${p2.y} ${p3.x - 1.5},${p3.y}`);
+                stemHighlightPath.setAttribute('stroke-opacity', clamp((val - 28) / 50, 0, 0.85));
+
+                // 6. Position & Morph Front and Back 3D Leaves Along Stem
+                // Notice: Even at 0%, the main leaves remain 72-80% size (never tiny dots!) and morph into hanging, curled blades
+                function placeAndMorphLeaf(slotKey, u, isLeft, minScaleAtZero, maxScaleAtFull, isBackLayer = false) {
+                    const mLeaf = morphLeaves[slotKey];
+                    const pt = getCubicBezierPointAndAngle(u, p0, p1, p2, p3);
+
+                    // Morph leaf blade geometry based on hydration
+                    const leafHydration = clamp((t - 0.02) / 0.68, 0, 1);
+                    updateLeafGeometry(mLeaf, isLeft, leafHydration, isBackLayer);
+
+                    // Substantial leaf size even at 0% so plant is unmistakably leafy!
+                    const scale = lerp(minScaleAtZero, maxScaleAtFull, t);
+
+                    // Gentle wind flutter
+                    const flutter = Math.sin(state.time * 3.0 + u * 6) * (1.8 + Math.abs(state.windVel) * 2.2);
+
+                    // Attach leaf naturally along stem tangent when healthy, or let gravity pull it downward when wilted
+                    const stemInfluence = pt.tangentDeg * lerp(0.25, 0.55, t);
+                    const perkySpread = isLeft ? lerp(-12, 16, t) : lerp(12, -16, t);
+                    const angle = stemInfluence + perkySpread + state.windSway * 0.4 + (isLeft ? flutter : -flutter);
+
+                    mLeaf.group.setAttribute('transform', `translate(${pt.x}, ${pt.y}) rotate(${angle}) scale(${scale})`);
+                }
+
+                // Back Layer Leaves (Always present at 60%-75% scale for lush botanical volume)
+                placeAndMorphLeaf('backL1', 0.26, true,  0.62, 0.76, true);
+                placeAndMorphLeaf('backR1', 0.32, false, 0.62, 0.76, true);
+                placeAndMorphLeaf('backL2', 0.56, true,  0.54, 0.68, true);
+                placeAndMorphLeaf('backR2', 0.62, false, 0.54, 0.68, true);
+
+                // Front Layer Leaves (Main 6 leaves clearly visible at every single percentage from 0% to 100%)
+                placeAndMorphLeaf('frontL1', 0.22, true,  0.76, 0.94, false);
+                placeAndMorphLeaf('frontR1', 0.27, false, 0.76, 0.94, false);
+                placeAndMorphLeaf('frontL2', 0.48, true,  0.70, 0.88, false);
+                placeAndMorphLeaf('frontR2', 0.53, false, 0.70, 0.88, false);
+                placeAndMorphLeaf('frontL3', 0.74, true,  0.58, 0.74, false);
+                placeAndMorphLeaf('frontR3', 0.79, false, 0.58, 0.74, false);
+
+                // 7. Nodding / Hanging Flower Head & Bud Unfurling
+                // At 0-30%, the flower head nods downward sympathetically like a thirsty sunflower/daisy (-52 deg),
+                // then lifts its head up proudly toward the sky as vitality increases!
+                const nodAngle = lerp(-48, 0, clamp(t / 0.55, 0, 1));
+                const headTilt = nodAngle + state.windSway * 0.9 + state.smoothMouseX * 12;
+                const headScale = lerp(0.78, 1.08, t);
+                flowerHeadRoot.setAttribute('transform', `translate(${p3.x}, ${p3.y}) rotate(${headTilt}) scale(${headScale})`);
+
+                // Bud shell wraps the nodding head at 0%-50% (so it looks like a real closed/wilted botanical bud),
+                // then peels open between 48% and 78%
+                const budOpenProgress = clamp((val - 45) / 33, 0, 1);
+                if (val < 78) {
+                    budShellGroup.setAttribute('display', 'inline');
+                    // Slightly parted at 0% showing a peek of the sleeping bud, then peels wide open after 45%
+                    const sepalAngle = 10 + budOpenProgress * 62;
+                    const budFade = 1 - clamp((val - 64) / 14, 0, 1);
+                    budShellGroup.setAttribute('opacity', budFade);
+                    budLeftSepal.setAttribute('transform', `rotate(${-sepalAngle}, -4, 12)`);
+                    budRightSepal.setAttribute('transform', `rotate(${sepalAngle}, 4, 12)`);
+                    budCenterPetal.setAttribute('transform', `scale(${0.85 - budOpenProgress * 0.35})`);
+                } else {
+                    budShellGroup.setAttribute('display', 'none');
+                }
+
+                // Individual 24 Petals:
+                // Even at 0%-45%, show small drooping/tucked wilted petals around the bud so it unmistakably reads as a flower head!
+                // Then from 50%-100%, unfurl into a full radiant 24-petal bloom.
+                const bloomProgress = clamp((val - 50) / 45, 0, 1);
+                outerPetalEls.forEach(({ el, baseAngle, index }) => {
+                    const stagger = (index % 2) * 0.06;
+                    const pNorm = clamp((bloomProgress - stagger) / (1 - stagger), 0, 1);
+                    // Small 0.28 base scale so wilted bud still has visible tucked petals around its crown
+                    const pScale = 0.26 + 0.74 * (pNorm * (1 + 0.12 * Math.sin(pNorm * Math.PI)));
+                    const pFlutter = Math.sin(state.time * 2.5 + index) * (0.8 + 1.4 * bloomProgress);
+                    el.setAttribute('transform', `translate(0, -6) rotate(${baseAngle + pFlutter}) scale(${pScale * 0.92}, ${pScale})`);
+                });
+
+                innerPetalEls.forEach(({ el, baseAngle, index }) => {
+                    const pNorm = clamp((bloomProgress - 0.1) / 0.9, 0, 1);
+                    const pScale = 0.20 + 0.80 * pNorm;
+                    const pFlutter = Math.cos(state.time * 2.8 + index) * (0.6 + 1.2 * bloomProgress);
+                    el.setAttribute('transform', `translate(0, -6) rotate(${baseAngle + pFlutter}) scale(${pScale * 0.88}, ${pScale * 0.95})`);
+                });
+
+                // 8. Pixar-Style Face Expressions & Cursor Eye Tracking
+                const lookX = clamp(state.smoothMouseX * 4.5, -4.5, 4.5);
+                const lookY = clamp(state.smoothMouseY * 3.5, -3.5, 3.5);
+                eyeTrackingGroup.setAttribute('transform', `translate(${lookX}, ${-6 + lookY})`);
+
+                // Blink or Joy Squint Eyes
+                const showHappyArcs = state.isBlinking || state.joyBlinkTimer > 0 || val > 92;
+                if (state.joyBlinkTimer > 0) state.joyBlinkTimer--;
+
+                openEyesGroup.setAttribute('display', showHappyArcs ? 'none' : 'inline');
+                happyArcEyesGroup.setAttribute('display', showHappyArcs ? 'inline' : 'none');
+
+                // Watery tears in eyes when sad (<38%)
+                const tearOp = clamp(1 - (val / 38), 0, 0.9);
+                wateryTearL.setAttribute('opacity', tearOp);
+                wateryTearR.setAttribute('opacity', tearOp);
+
+                // Eyebrows morph from worried/sad slant to cheerful arch
+                const browSlant = lerp(4, -2, t);
+                const browLift = lerp(-9, -12, t);
+                eyebrowL.setAttribute('d', `M -16,${browLift + browSlant} Q -11,${browLift - 3} -6,${browLift - browSlant}`);
+                eyebrowR.setAttribute('d', `M 6,${browLift - browSlant} Q 11,${browLift - 3} 16,${browLift + browSlant}`);
+
+                // Mouth morphs from frown to big open smile
+                const smileCurve = lerp(-6, 11, t);
+                mouthOuter.setAttribute('d', `M -7,5 Q 0,${5 + smileCurve} 7,5`);
+                const openMouthScale = clamp((val - 62) / 35, 0, 1.15);
+                mouthOpenGroup.setAttribute('transform', `translate(0, 4.5) scale(${openMouthScale})`);
+
+                const blushOp = lerp(0.12, 0.78, t);
+                blushL.setAttribute('opacity', blushOp);
+                blushR.setAttribute('opacity', blushOp);
+
+                // 9. Animated 3D Butterfly (Orbits flower when Vitality > 80%)
+                const bflyProgress = clamp((val - 80) / 15, 0, 1);
+                if (bflyProgress > 0.01) {
+                    const orbitX = p3.x + Math.cos(state.time * 1.6) * 68 + 25;
+                    const orbitY = p3.y - 48 + Math.sin(state.time * 3.2) * 18;
+                    const wingFlap = 0.35 + Math.abs(Math.sin(state.time * 14)) * 0.75;
+                    const bflyTilt = Math.cos(state.time * 1.6) * 18;
+                    butterflyGroup.setAttribute('opacity', bflyProgress);
+                    butterflyGroup.setAttribute('transform', `translate(${orbitX}, ${orbitY}) rotate(${bflyTilt}) scale(${bflyProgress * 0.85})`);
+                    butterflyWings.setAttribute('transform', `scale(${wingFlap}, 1)`);
+                } else {
+                    butterflyGroup.setAttribute('opacity', 0);
+                }
+
+                // 10. Render Overlay Canvas Particles
+                updateAndDrawParticles(t);
+
+                requestAnimationFrame(animateFrame);
+            }
+
+            // ============================================================================
+            // 6. USER INTERACTIONS (Slider, Mouse Tracking, Click Splash, Action Buttons)
+            // ============================================================================
+            slider.addEventListener('input', (e) => {
+                state.targetVal = parseFloat(e.target.value);
+            });
+
+            // Mouse Cursor Tracking over Stage
+            stageContainer.addEventListener('mousemove', (e) => {
+                const rect = stageContainer.getBoundingClientRect();
+                const normX = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+                const normY = ((e.clientY - rect.top) / rect.height) * 2 - 1;
+                state.mouseX = clamp(normX, -1, 1);
+                state.mouseY = clamp(normY, -1, 1);
+            });
+
+            stageContainer.addEventListener('mouseleave', () => {
+                state.mouseX = 0;
+                state.mouseY = 0;
+            });
+
+            // Click on Stage to Splash Water & Bounce Plant!
+            stageContainer.addEventListener('click', (e) => {
+                const rect = stageContainer.getBoundingClientRect();
+                const clickX = e.clientX - rect.left;
+                const clickY = e.clientY - rect.top;
+
+                spawnWaterSplash(clickX, clickY, 22);
+                state.headBounceVel = 7.5;
+                state.windVel += (Math.random() - 0.5) * 10;
+                state.joyBlinkTimer = 28;
+            });
+
+            // Quick Action Buttons
+            document.getElementById('btnWater').addEventListener('click', () => {
+                state.targetVal = clamp(state.targetVal + 15, 0, 100);
+                slider.value = state.targetVal;
+                state.headBounceVel = 6.5;
+                spawnWaterSplash(fxCanvas.width * 0.5, fxCanvas.height * 0.45, 26);
+                state.joyBlinkTimer = 30;
+            });
+
+            document.getElementById('btnSun').addEventListener('click', () => {
+                state.targetVal = clamp(state.targetVal + 15, 0, 100);
+                slider.value = state.targetVal;
+                state.headBounceVel = -5.5;
+                spawnSunlightSparkles(fxCanvas.width * 0.5, fxCanvas.height * 0.4, 24);
+                state.joyBlinkTimer = 30;
+            });
+
+            document.getElementById('btnBreeze').addEventListener('click', () => {
+                state.windVel += 14;
+                state.headBounceVel = 4;
+                spawnSunlightSparkles(fxCanvas.width * 0.5, fxCanvas.height * 0.35, 12);
+            });
+
+            // Preset Stage Buttons
+            document.querySelectorAll('.preset-trigger').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const preset = parseFloat(btn.getAttribute('data-preset'));
+                    state.targetVal = preset;
+                    slider.value = preset;
+                    state.headBounceVel = 5;
+                });
+            });
+
+            // Copy Self-Contained Embed Code
+            const copyEmbedBtn = document.getElementById('copyEmbedBtn');
+            const copyBtnLabel = document.getElementById('copyBtnLabel');
+            const toastNotification = document.getElementById('toastNotification');
+
+            copyEmbedBtn.addEventListener('click', () => {
+                const htmlCode = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+                const tempInput = document.createElement('textarea');
+                tempInput.value = htmlCode;
+                document.body.appendChild(tempInput);
+                tempInput.select();
+                document.execCommand('copy');
+                document.body.removeChild(tempInput);
+
+                copyBtnLabel.textContent = 'Copied!';
+                toastNotification.classList.remove('opacity-0', 'translate-y-4');
+                toastNotification.classList.add('opacity-100', 'translate-y-0');
+
+                setTimeout(() => {
+                    copyBtnLabel.textContent = 'Copy Widget Code';
+                    toastNotification.classList.remove('opacity-100', 'translate-y-0');
+                    toastNotification.classList.add('opacity-0', 'translate-y-4');
+                }, 2600);
+            });
+
+            // Start 60fps Physics & Botanical Animation Loop
+            requestAnimationFrame(animateFrame);
+        })();
+    </script>
+</body>
+</html>
